@@ -36,6 +36,10 @@ class Processor {
       this.queue.delete(promise);
     }
 
+    if (hasFailures) {
+      await this.retryFailed();
+    }
+
     return response;
   }
   
