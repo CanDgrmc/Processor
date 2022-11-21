@@ -28,7 +28,6 @@ class Processor {
     for (let i = queue.length - 1; i >= 0 ; i--) {
       const promise = queue[i];
       const result = await this.process(promise);
-      console.log('result', result);
       if (!result) {
         hasFailures = true;
       }
@@ -50,7 +49,6 @@ class Processor {
     // processing the queue
     this.queue.forEach(async (promise) => {
       const result = await this.process(promise);
-      console.log('result', result);
       if (!result) {
         hasFailures = true;
       }
@@ -66,7 +64,6 @@ class Processor {
 
   async process(promise) {
     try {
-      console.log('processing..');
       this.processes.add(promise);
       const response = await promise();
       this.processes.delete(promise);
