@@ -1,4 +1,5 @@
 class Processor {
+  retryInterval = 500;
   queue = new Set();
   processes = new Set();
   failedProcesses = new Set();
@@ -8,9 +9,11 @@ class Processor {
   /**
    * 
    * @param {number} retryCount 
+   * @param {number} retryInterval milliseconds 
    */
-  constructor(retryCount = 2) {
+  constructor(retryCount = 2, retryInterval) {
     this.retryCount = retryCount;
+    this.retryInterval = retryInterval;
   }
 
   addToQueue(process) {
@@ -80,7 +83,7 @@ class Processor {
     }
 
     for (let i = 0; i < this.retryCount; i++) {
-      await this._wait(500);
+      await this._wait(this.retryInterval);
       this.failedProcesses.forEach(async (func) => {
         const result = await this.process(func);
         if (result) {
