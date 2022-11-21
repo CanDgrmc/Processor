@@ -35,8 +35,7 @@ class Processor {
   async bulkProcessQueue() {
     const response = [];
     let bulkProcessGroup = [];
-    let hasFailures = false;
-    // processing the queue
+
     this.queue.forEach(async (promise) => {
       this.queue.delete(promise);
       bulkProcessGroup.push(promise);
@@ -51,9 +50,10 @@ class Processor {
       response.push(...finalPromiseResults.filter(i => i.state === 'fulfilled').map(i => i.value));
     }
 
-    if (hasFailures) {
+    if (this.failedProcesses.size) {
       await this.retryFailed();
     }
+
     return response;
   }
 
@@ -140,8 +140,10 @@ class Processor {
   }
 
 
-  async defer() {
-    // TODO
+  destroy() {
+    this.queue = new Set();
+    this.processes = new Set();
+    this.failedProcesses = new Set();
   }
 
   /**
@@ -151,7 +153,6 @@ class Processor {
    */
   async _wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-
   }
   
 }
