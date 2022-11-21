@@ -1,23 +1,60 @@
 class Processor {
-  retryInterval = 500;
+  retryInterval;
   queue = new Set();
   processes = new Set();
   failedProcesses = new Set();
   errors = [];
-  retryCount = 2;
+  retryCount;
+  executeCount;
   
   /**
    * 
    * @param {number} retryCount 
    * @param {number} retryInterval milliseconds 
    */
-  constructor(retryCount = 2, retryInterval) {
+  constructor(retryCount = 2, retryInterval = 500, executeCount = 10) {
     this.retryCount = retryCount;
     this.retryInterval = retryInterval;
+    this.executeCount = executeCount;
   }
 
   addToQueue(process) {
     this.queue.add(process);
+  }
+
+  removeFromQueue(process) {
+    this.queue.delete(process);
+  }
+
+  prependQueue(process) {
+    const queue = Array.from(this.queue);
+    queue.unshift(process);
+    this.queue = new Set(queue);
+  }
+
+  async bulkProcessQueue() {
+    const response = [];
+    let bulkProcessGroup = [];
+    let hasFailures = false;
+    // processing the queue
+    this.queue.forEach(async (promise) => {
+      this.queue.delete(promise);
+      bulkProcessGroup.push(promise);
+      if (bulkProcessGroup.length % this.executeCount === 0) {
+        const promiseResults = await Promise.all(bulkProcessGroup);
+        response.push(...promiseResults.filter(i => i.state === 'fulfilled').map(i => i.value));
+      }
+    });
+
+    if (bulkProcessGroup.length) {
+      const finalPromiseResults = await Promise.all(bulkProcessGroup);
+      response.push(...finalPromiseResults.filter(i => i.state === 'fulfilled').map(i => i.value));
+    }
+
+    if (hasFailures) {
+      await this.retryFailed();
+    }
+    return response;
   }
 
   async processStack () {
